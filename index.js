@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
+const fetch = require('node-fetch');
 
 const {graphqlExpress, graphiqlExpress} = require('apollo-server-express');
 const {makeExecutableSchema} = require('graphql-tools');
@@ -30,10 +31,37 @@ const fuzzy = new Fuse(db, fuseOptions);
 // The GraphQL schema in string form
 const typeDefs = `
   type Query { 
-      mods(q: String, page: Int, page_size: Int): [Mod]
+	  mod(name: String): Mod
+      mods(q: String, page: Int, page_size: Int): [ModSearchResult]
   }
   
   type Mod { 
+      id: Int 
+      title: String 
+      name: String 
+      owner: String
+      description: String
+      description_html: String
+	  summary: String
+      
+      game_versions: [String] 
+      downloads_count: Int 
+      current_user_rating: Int 
+      ratings_count: Int 
+      github_path: String
+      updated_at: String
+      license_flags: Int 
+      license_name: String 
+      license_url: String 
+      homepage: String 
+      created_at: String 
+	  
+	  tags: [Tag],
+	  media_files: [MediaFile]
+	  releases: [Release]
+  }
+  
+  type ModSearchResult { 
       id: Int 
       title: String 
       name: String 
@@ -107,6 +135,18 @@ const typeDefs = `
 // The resolvers
 const resolvers = {
 	Query: {
+		mod: (z, args) => {
+			const url = `https://mods.factorio.com/api/mods/${args.name}`;
+			console.log({url});
+			return fetch(url)
+				.then(res => {
+					const json = res.json();
+					console.log({json});
+					
+					return json;
+				});
+		},
+		
 		mods: (z, args) => {
 			const props = Object.assign({
 				q: '',
