@@ -1,3 +1,12 @@
 {
-    "parser": "babel-eslint"
+    "parser": "babel-eslint",
+    "extends": "eslint:recommended",
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "rules": {
+      "no-console": "off",
+      "comma-dangle": ["error", "always-multiline"]
+    }
 }
