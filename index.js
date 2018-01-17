@@ -1,38 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
-const fetch = require('node-fetch');
+const axios = require('axios');
 
-const {graphqlExpress, graphiqlExpress} = require('apollo-server-express');
-const {makeExecutableSchema} = require('graphql-tools');
-const {printSchema} = require('graphql/utilities/schemaPrinter');
-
-const Fuse = require('fuse.js');
-const fuseOptions = {
-	shouldSort: true,
-	threshold: 0.5,
-	location: 0,
-	distance: 100,
-	maxPatternLength: 32,
-	minMatchCharLength: 1,
-	includeScore: false,
-	// keys: [
-	//     {name: 'title', weight: 0.5},
-	//     {name: 'summary', weight: 0.3},
-	//     {name: 'owner', weight: 0.2},
-	// ],
-	keys: ['title', 'summary', 'owner'],
-};
-
-const data = require('./data/mods.json');
-const db = data.results;
-const fuzzy = new Fuse(db, fuseOptions);
+const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
+const { makeExecutableSchema } = require('graphql-tools');
+const { printSchema } = require('graphql/utilities/schemaPrinter');
 
 // The GraphQL schema in string form
 const typeDefs = `
   type Query { 
 	  mod(name: String): Mod
-      mods(q: String, page: Int, page_size: Int): [ModSearchResult]
+      mods(q: String, page: Int, page_size: Int, order: String, tags: String): [ModSearchResult]
   }
   
   type Mod { 
@@ -137,48 +116,21 @@ const resolvers = {
 	Query: {
 		mod: (z, args) => {
 			const url = `https://mods.factorio.com/api/mods/${args.name}`;
-			console.log({url});
-			return fetch(url)
-				.then(res => {
-					const json = res.json();
-					console.log({json});
-					
-					return json;
-				});
+			
+			return axios.get(url).then(res => _.get(res, 'data'));
 		},
 		
 		mods: (z, args) => {
-			const props = Object.assign({
+			const params = Object.assign({
 				q: '',
+				order: 'updated',
+				tags: '',
 				page: 1,
 				page_size: 25,
 			}, args);
-
-			const {q, page, page_size} = props;
-
-			const startRow = (page - 1) * page_size;
-			const endRow = startRow + page_size;
-
-			console.log({
-				len: db.length,
-				q,
-				page,
-				page_size,
-				startRow,
-				endRow,
-				z,
-			});
-
-			// return db.filter(mod => {
-			//     return mod.corpus.includes('start');
-			// }).slice(startRow, endRow);
-
-			const resultSet = (q ? fuzzy.search(q) : db);
-
-			return _.chain(resultSet)
-			// .sortBy('downloads_count')
-			// .reverse()
-				.slice(startRow, endRow).value();
+			
+			const url = `https://mods.factorio.com/api/mods`;			
+			return axios.get(url, { params }).then(res => _.castArray(_.get(res, 'data.results')));
 		},
 	},
 };
