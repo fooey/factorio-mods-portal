@@ -1,15 +1,6 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import _ from 'lodash';
-import axios from 'axios';
-
-import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
-import { makeExecutableSchema } from 'graphql-tools';
-import { printSchema } from 'graphql/utilities/schemaPrinter';
-
 
 // The GraphQL schema in string form
-const typeDefs = `
+export default `
   type Query { 
 	  mod(name: String): Mod
       mods(q: String, page: Int, page_size: Int, order: String, tags: String): [ModSearchResult]
@@ -111,45 +102,3 @@ const typeDefs = `
   	version: String
   }
 `;
-
-// The resolvers
-const resolvers = {
-	Query: {
-		mod: (z, args) => {
-			const url = `https://mods.factorio.com/api/mods/${args.name}`;
-			
-			return axios.get(url).then(res => _.get(res, 'data'));
-		},
-		
-		mods: (z, args) => {
-			const params = Object.assign({
-				q: '',
-				order: 'updated',
-				tags: '',
-				page: 1,
-				page_size: 25,
-			}, args);
-			
-			const url = `https://mods.factorio.com/api/mods`;			
-			return axios.get(url, { params }).then(res => _.castArray(_.get(res, 'data.results')));
-		},
-	},
-};
-
-// Put together a schema
-const schema = makeExecutableSchema({typeDefs, resolvers});
-
-// Initialize the app
-const app = express();
-
-// The GraphQL endpoint
-app.use('/graphql', bodyParser.json(), graphqlExpress({schema}));
-app.use('/schema', (req, res) => res.type('text/plain').send(printSchema(schema)));
-
-// GraphiQL, a visual editor for queries
-app.use('/graphiql', graphiqlExpress({endpointURL: '/graphql'}));
-
-// Start the server
-app.listen(3000, () => {
-	console.log('Go to http://localhost:3000/graphiql to run queries!');
-});

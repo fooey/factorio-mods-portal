@@ -20,7 +20,7 @@
         "nodemon": "^1.14.11"
     },
     "scripts": {
-        "dev": "nodemon  --exec babel-node index.js",
+        "dev": "nodemon  --exec babel-node src/server.js",
         "babel-node": "babel-node --presets=/*a*/"
     }
 }
