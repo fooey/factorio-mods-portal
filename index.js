@@ -1,11 +1,12 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const _ = require('lodash');
-const axios = require('axios');
+import express from 'express';
+import bodyParser from 'body-parser';
+import _ from 'lodash';
+import axios from 'axios';
 
-const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
-const { makeExecutableSchema } = require('graphql-tools');
-const { printSchema } = require('graphql/utilities/schemaPrinter');
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
+import { makeExecutableSchema } from 'graphql-tools';
+import { printSchema } from 'graphql/utilities/schemaPrinter';
+
 
 // The GraphQL schema in string form
 const typeDefs = `
@@ -147,9 +148,6 @@ app.use('/schema', (req, res) => res.type('text/plain').send(printSchema(schema)
 
 // GraphiQL, a visual editor for queries
 app.use('/graphiql', graphiqlExpress({endpointURL: '/graphql'}));
-
-// all the things
-app.use('/mods.json', (req, res) => res.json(db));
 
 // Start the server
 app.listen(3000, () => {
